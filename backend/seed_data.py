@@ -482,11 +482,14 @@ def seed_feature_flags(
     return flags
 
 
-def seed(*, reset: bool = True) -> None:
+def seed(*, reset: bool = True, skip_if_seeded: bool = False) -> None:
     """Seed the database, optionally wiping existing rows first."""
     Base.metadata.create_all(bind=engine)
     rng = random.Random(RANDOM_SEED)
     with SessionFactory() as session:
+        if skip_if_seeded and session.query(User).count() > 0:
+            print("Database already seeded; leaving it untouched.")
+            return
         if reset:
             wipe(session)
         users = seed_users(session)
@@ -513,8 +516,13 @@ def main() -> None:
         action="store_true",
         help="Append instead of wiping the existing demo rows.",
     )
+    parser.add_argument(
+        "--skip-if-seeded",
+        action="store_true",
+        help="Do nothing when users already exist; used on container start-up.",
+    )
     args = parser.parse_args()
-    seed(reset=not args.keep_existing)
+    seed(reset=not args.keep_existing, skip_if_seeded=args.skip_if_seeded)
 
 
 if __name__ == "__main__":
