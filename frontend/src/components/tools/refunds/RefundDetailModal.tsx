@@ -31,6 +31,10 @@ export function RefundDetailModal({
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // A decided refund is terminal server-side (409 on a second decision), so the
+  // controls disappear instead of inviting a rejected request.
+  const isDecidable = refund ? refund.status === 'pending' || refund.status === 'info_requested' : false;
+
   const submit = async (action: 'approve' | 'reject' | 'request-info') => {
     setError(null);
     if (reason.trim().length < 3) {
@@ -56,7 +60,7 @@ export function RefundDetailModal({
           <Button variant="secondary" onClick={onClose}>
             Close
           </Button>
-          {canReview && (
+          {canReview && isDecidable && (
             <>
               <Button
                 variant="secondary"
@@ -105,7 +109,14 @@ export function RefundDetailModal({
               </dl>
             </section>
 
-            {canReview && (
+            {canReview && !isDecidable && (
+              <p className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                This refund is already {humanize(refund.status).toLowerCase()} — see the approval
+                chain for who decided it and why.
+              </p>
+            )}
+
+            {canReview && isDecidable && (
               <section className="space-y-2 rounded-md bg-slate-50 p-3">
                 <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Decision reason (required)
