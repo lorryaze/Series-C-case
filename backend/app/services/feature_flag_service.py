@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.factories.feature_flag_factory import FeatureFlagFactory
 from app.models.audit import AuditLog
+from app.models.base import utcnow
 from app.models.enums import AuditAction, AuditEntity, FlagEnvironment
 from app.models.feature_flag import FeatureFlag, FeatureFlagState
 from app.models.user import User
@@ -130,7 +131,9 @@ class FeatureFlagService:
         }
         for field, value in updates.items():
             setattr(state, field, value)
-        self.flags.update(flag, {"modified_by_id": actor.id})
+        # Environment state lives in a child row, so stamp the parent explicitly:
+        # without this the flag looks untouched when the same actor changes it again.
+        self.flags.update(flag, {"modified_by_id": actor.id, "updated_at": utcnow()})
         self.audit.record_field_changes(
             entity_type=AuditEntity.FEATURE_FLAG,
             entity_id=flag.id,

@@ -69,6 +69,19 @@ def test_toggle_flips_a_single_environment(
     assert _environment(body, "staging")["enabled"] is False
 
 
+def test_toggle_stamps_the_parent_flag_as_modified(
+    admin_client: TestClient, feature_flag: FeatureFlag
+) -> None:
+    created = admin_client.get(f"/api/feature-flags/{feature_flag.id}").json()
+    toggled = admin_client.post(
+        f"/api/feature-flags/{feature_flag.id}/toggle",
+        json={"environment": "production", "enabled": True},
+    ).json()
+
+    assert toggled["updated_at"] >= created["updated_at"]
+    assert toggled["modified_by"]["email"] == "admin@fintech.com"
+
+
 def test_rollout_percentage_can_be_set_per_environment(
     admin_client: TestClient, feature_flag: FeatureFlag
 ) -> None:
