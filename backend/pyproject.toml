@@ -1,0 +1,38 @@
+[project]
+name = "internal-tools-backend"
+version = "0.1.0"
+description = "Shared FastAPI platform behind the KYC, refunds and feature flag tools"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 96
+target-version = "py311"
+exclude = ["alembic/versions", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "D", "ANN"]
+ignore = ["D203", "D213", "D105", "D107", "ANN401"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D103", "ANN201", "D100"]
+"alembic/env.py" = ["D100"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = []
+exclude = "(alembic/versions|\\.venv)"
+warn_unused_ignores = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["error::DeprecationWarning:app.*"]
