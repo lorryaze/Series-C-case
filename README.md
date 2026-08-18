@@ -123,10 +123,19 @@ the feature flag changelog.
 
 ## Screenshots
 
-_Placeholder — add captures of the KYC queue, refunds dashboard and feature flags panel here._
+Captured from the running stack with the seeded dataset.
 
-| View | Screenshot |
-| --- | --- |
-| KYC Review Queue | _TBD_ |
-| Refunds Dashboard | _TBD_ |
-| Feature Flags | _TBD_ |
+**KYC Review Queue** — status cards, filters and the case drawer with risk, documents, notes and audit log.
+
+![KYC review queue](docs/screenshots/kyc-queue.png)
+![KYC case detail](docs/screenshots/kyc-detail.png)
+
+**Refunds Dashboard** — summary cards, 30-day trend, and the detail view with customer history and approval chain.
+
+![Refunds dashboard](docs/screenshots/refunds-dashboard.png)
+![Refund detail](docs/screenshots/refunds-detail.png)
+
+**Feature Flags** — per-environment toggles with rollout percentages and the changelog.
+
+![Feature flags](docs/screenshots/feature-flags.png)
+![Feature flag history](docs/screenshots/feature-flags-history.png)
