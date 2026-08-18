@@ -1,6 +1,6 @@
 """Authentication and user provisioning logic."""
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from sqlalchemy.orm import Session
 
@@ -34,9 +34,7 @@ class AuthService:
         token = create_access_token(user.email, role=user.role.value, user_id=user.id)
         return token, settings.access_token_expire_minutes * 60
 
-    def create_user(
-        self, *, email: str, full_name: str, password: str, role: Role
-    ) -> User:
+    def create_user(self, *, email: str, full_name: str, password: str, role: Role) -> User:
         """Provision a new staff user."""
         if self.users.get_by_email(email) is not None:
             raise ConflictError(f"A user with email '{email}' already exists")

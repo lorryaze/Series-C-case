@@ -1,6 +1,6 @@
 """Business logic for the feature flags admin panel."""
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from sqlalchemy.orm import Session
 

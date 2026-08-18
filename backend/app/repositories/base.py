@@ -1,6 +1,7 @@
 """Generic repository implementing the data-access half of every tool."""
 
-from typing import Any, Generic, Sequence, TypeVar
+from collections.abc import Sequence
+from typing import Any, Generic, TypeVar
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session

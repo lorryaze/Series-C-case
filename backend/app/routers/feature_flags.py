@@ -92,7 +92,7 @@ def read_flag(
     "/{flag_id}",
     response_model=FeatureFlagRead,
     summary="Edit flag metadata",
-    description="Admin only. Updates name, description or default state; each change is audited.",
+    description="Admin only. Updates name, description or default state; changes are audited.",
 )
 def update_flag(
     flag_id: int,

@@ -2,9 +2,9 @@
 
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import pool
 
+from alembic import context
 from app.config import get_settings
 from app.database import build_engine
 from app.models import Base

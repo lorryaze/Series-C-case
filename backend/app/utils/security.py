@@ -1,6 +1,6 @@
 """Password hashing and JWT access-token helpers."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import bcrypt
@@ -41,7 +41,7 @@ def create_access_token(
     """Mint a signed access token for a user."""
     settings = get_settings()
     expires_delta = expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload: dict[str, Any] = {
         "sub": subject,
         "uid": user_id,

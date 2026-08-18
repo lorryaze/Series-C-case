@@ -4,6 +4,7 @@ import logging
 from typing import Any
 
 from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -21,17 +22,23 @@ def error_response(
     details: dict[str, Any] | None = None,
     request_id: str | None = None,
 ) -> JSONResponse:
-    """Build the platform-wide error payload."""
+    """Build the platform-wide error payload.
+
+    ``details`` is encoded defensively because validation errors can carry
+    non-JSON-native values such as ``Decimal`` inputs.
+    """
     return JSONResponse(
         status_code=status_code,
-        content={
-            "error": {
-                "code": code,
-                "message": message,
-                "details": details or {},
-                "request_id": request_id,
+        content=jsonable_encoder(
+            {
+                "error": {
+                    "code": code,
+                    "message": message,
+                    "details": details or {},
+                    "request_id": request_id,
+                }
             }
-        },
+        ),
     )
 
 

@@ -18,6 +18,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Tag each request with an id and log its method, path, status and latency."""
 
     async def dispatch(self, request: Request, call_next: RequestHandler) -> Response:
+        """Attach a request id, time the call and log the outcome."""
         request_id = request.headers.get("x-request-id") or uuid.uuid4().hex
         request.state.request_id = request_id
         started = time.perf_counter()

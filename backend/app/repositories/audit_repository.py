@@ -1,6 +1,6 @@
 """Data access for the shared audit trail."""
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from sqlalchemy import select
 

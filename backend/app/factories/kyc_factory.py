@@ -43,9 +43,7 @@ class KycReviewFactory:
         *, document_type: DocumentType, file_name: str, verified: bool = False
     ) -> KycDocument:
         """Create an unpersisted document metadata row."""
-        return KycDocument(
-            document_type=document_type, file_name=file_name, verified=verified
-        )
+        return KycDocument(document_type=document_type, file_name=file_name, verified=verified)
 
     @staticmethod
     def build_note(*, review_id: int, author_id: int, body: str) -> KycNote:

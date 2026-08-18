@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import argparse
 import random
-from datetime import datetime, timedelta, timezone
+from collections.abc import Sequence
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Sequence
 
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
@@ -46,16 +46,64 @@ from app.utils.security import hash_password
 RANDOM_SEED = 20260818
 
 FIRST_NAMES = [
-    "Amara", "Ben", "Camila", "Devon", "Elena", "Farhan", "Grace", "Hiro",
-    "Ines", "Jonas", "Keiko", "Liam", "Mariana", "Noah", "Olga", "Priya",
-    "Quinn", "Rafael", "Sofia", "Tomas", "Uma", "Viktor", "Wren", "Xiomara",
-    "Yusuf", "Zara", "Adaeze", "Bruno", "Chloe", "Dmitri",
+    "Amara",
+    "Ben",
+    "Camila",
+    "Devon",
+    "Elena",
+    "Farhan",
+    "Grace",
+    "Hiro",
+    "Ines",
+    "Jonas",
+    "Keiko",
+    "Liam",
+    "Mariana",
+    "Noah",
+    "Olga",
+    "Priya",
+    "Quinn",
+    "Rafael",
+    "Sofia",
+    "Tomas",
+    "Uma",
+    "Viktor",
+    "Wren",
+    "Xiomara",
+    "Yusuf",
+    "Zara",
+    "Adaeze",
+    "Bruno",
+    "Chloe",
+    "Dmitri",
 ]
 LAST_NAMES = [
-    "Adeyemi", "Bianchi", "Chen", "Duarte", "Eriksen", "Fontaine", "Gupta",
-    "Haddad", "Ibrahim", "Jensen", "Kowalski", "Lindqvist", "Moreau", "Nakamura",
-    "Okafor", "Petrov", "Quintero", "Rossi", "Santos", "Tanaka", "Ueda",
-    "Vargas", "Watanabe", "Xu", "Yilmaz", "Zhang",
+    "Adeyemi",
+    "Bianchi",
+    "Chen",
+    "Duarte",
+    "Eriksen",
+    "Fontaine",
+    "Gupta",
+    "Haddad",
+    "Ibrahim",
+    "Jensen",
+    "Kowalski",
+    "Lindqvist",
+    "Moreau",
+    "Nakamura",
+    "Okafor",
+    "Petrov",
+    "Quintero",
+    "Rossi",
+    "Santos",
+    "Tanaka",
+    "Ueda",
+    "Vargas",
+    "Watanabe",
+    "Xu",
+    "Yilmaz",
+    "Zhang",
 ]
 BUSINESS_SUFFIXES = ["Labs", "Capital", "Logistics", "Studio", "Holdings", "Collective"]
 COUNTRIES = ["US", "GB", "DE", "BR", "NG", "SG", "CA", "AE", "IN", "MX"]
@@ -68,7 +116,11 @@ RISK_SUMMARIES = {
 }
 
 FLAG_DEFINITIONS: list[tuple[str, str, bool]] = [
-    ("Enable instant transfers", "Routes eligible payouts through the instant rails provider.", True),
+    (
+        "Enable instant transfers",
+        "Routes eligible payouts through the instant rails provider.",
+        True,
+    ),
     ("New onboarding flow", "Three-step KYC onboarding with document autocapture.", True),
     ("Dark mode", "Dark theme across the customer dashboard.", True),
     ("Beta risk engine", "Scores onboarding with the v2 risk model shadow-mode first.", False),
@@ -96,12 +148,21 @@ DEMO_USERS: list[tuple[str, str, Role]] = [
 
 def utc(days_ago: float = 0.0) -> datetime:
     """Timestamp ``days_ago`` days before now, in UTC."""
-    return datetime.now(timezone.utc) - timedelta(days=days_ago)
+    return datetime.now(UTC) - timedelta(days=days_ago)
 
 
 def wipe(session: Session) -> None:
     """Delete every demo row so seeding starts from a clean slate."""
-    for model in (AuditLog, KycNote, KycDocument, KycReview, Refund, FeatureFlagState, FeatureFlag, User):
+    for model in (
+        AuditLog,
+        KycNote,
+        KycDocument,
+        KycReview,
+        Refund,
+        FeatureFlagState,
+        FeatureFlag,
+        User,
+    ):
         session.execute(delete(model))
     session.commit()
 
@@ -156,9 +217,7 @@ def seed_kyc_reviews(
             customer_name=name,
             customer_email=f"{first.lower()}.{last.lower()}@example.com",
             customer_country=rng.choice(COUNTRIES),
-            business_name=(
-                f"{last} {rng.choice(BUSINESS_SUFFIXES)}" if is_business else None
-            ),
+            business_name=(f"{last} {rng.choice(BUSINESS_SUFFIXES)}" if is_business else None),
             submitted_at=submitted_at,
             status=status,
             risk_score=risk_score,
@@ -167,7 +226,9 @@ def seed_kyc_reviews(
             sanctions_hit=risk_score > 80 and rng.random() < 0.5,
             pep_match=risk_score > 60 and rng.random() < 0.25,
             primary_document_type=(
-                DocumentType.BUSINESS_REGISTRATION if is_business else rng.choice(
+                DocumentType.BUSINESS_REGISTRATION
+                if is_business
+                else rng.choice(
                     [
                         DocumentType.PASSPORT,
                         DocumentType.DRIVERS_LICENSE,

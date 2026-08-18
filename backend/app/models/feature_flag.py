@@ -3,12 +3,14 @@
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
-    Enum as SAEnum,
     ForeignKey,
     Integer,
     String,
     Text,
     UniqueConstraint,
+)
+from sqlalchemy import (
+    Enum as SAEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

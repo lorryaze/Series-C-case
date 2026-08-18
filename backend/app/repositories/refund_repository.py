@@ -1,9 +1,9 @@
 """Data access for refunds."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Sequence
 
 from sqlalchemy import Select, cast, func, select
 from sqlalchemy.types import String
@@ -79,7 +79,7 @@ class RefundRepository(BaseRepository[Refund]):
         rows = self.session.execute(statement).all()
         if not rows:
             return None
-        durations = [
+        durations: list[float] = [
             (processed_at - requested_at).total_seconds() / 3600
             for requested_at, processed_at in rows
             if processed_at is not None

@@ -1,7 +1,7 @@
 """Business logic for the KYC review queue."""
 
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Sequence
 
 from sqlalchemy.orm import Session
 
@@ -12,8 +12,8 @@ from app.models.enums import (
     AuditAction,
     AuditEntity,
     KycStatus,
-    Role,
     RiskLevel,
+    Role,
 )
 from app.models.kyc_review import KycNote, KycReview
 from app.models.user import User

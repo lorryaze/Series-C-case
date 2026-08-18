@@ -1,7 +1,7 @@
 """Data access for KYC reviews."""
 
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Sequence
 
 from sqlalchemy import Select, func, select
 

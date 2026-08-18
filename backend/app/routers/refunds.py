@@ -81,9 +81,7 @@ def list_refunds(
         "used by the summary cards."
     ),
 )
-def read_summary(
-    current_user: CurrentUser, refund_service: RefundServiceDep
-) -> RefundSummary:
+def read_summary(current_user: CurrentUser, refund_service: RefundServiceDep) -> RefundSummary:
     """Return refund summary metrics."""
     return refund_service.summary()
 
@@ -193,7 +191,6 @@ def _to_detail(refund_service: RefundService, refund: Refund) -> RefundDetail:
         for item in refund_service.customer_history(refund)
     ]
     detail.approval_chain = [
-        AuditLogRead.model_validate(entry)
-        for entry in refund_service.approval_chain(refund)
+        AuditLogRead.model_validate(entry) for entry in refund_service.approval_chain(refund)
     ]
     return detail

@@ -1,8 +1,8 @@
 """Business logic for the refunds dashboard."""
 
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Sequence
 
 from sqlalchemy.orm import Session
 
@@ -69,9 +69,7 @@ class RefundService:
 
         return RefundSummary(
             total_count=sum(agg.count for agg in aggregates.values()),
-            total_amount=sum(
-                (agg.amount for agg in aggregates.values()), start=Decimal("0")
-            ),
+            total_amount=sum((agg.amount for agg in aggregates.values()), start=Decimal("0")),
             pending_count=count_of(RefundStatus.PENDING),
             pending_amount=amount_of(RefundStatus.PENDING),
             approved_count=count_of(RefundStatus.APPROVED),
@@ -85,7 +83,10 @@ class RefundService:
     def trend(self, *, days: int = 30) -> list[RefundTrendPoint]:
         """Return a dense daily series of refund volume for the last ``days`` days."""
         since = utcnow() - timedelta(days=days - 1)
-        totals = {day: (count, amount) for day, count, amount in self.refunds.daily_totals(since=since)}
+        totals = {
+            day: (count, amount)
+            for day, count, amount in self.refunds.daily_totals(since=since)
+        }
         series: list[RefundTrendPoint] = []
         for offset in range(days):
             day = (since + timedelta(days=offset)).date()
@@ -131,9 +132,7 @@ class RefundService:
 
     def request_more_info(self, refund_id: int, *, reason: str, actor: User) -> Refund:
         """Ask the requester for more information, keeping the case open."""
-        return self._decide(
-            refund_id, RefundStatus.INFO_REQUESTED, reason=reason, actor=actor
-        )
+        return self._decide(refund_id, RefundStatus.INFO_REQUESTED, reason=reason, actor=actor)
 
     def _decide(
         self, refund_id: int, new_status: RefundStatus, *, reason: str, actor: User

@@ -77,7 +77,7 @@ def list_reviews(
     "/counts",
     response_model=KycQueueCounts,
     summary="Queue counts by status",
-    description="Powers the dashboard cards: pending, in review, approved, rejected, escalated.",
+    description="Powers the dashboard cards: pending, in review, approved, rejected.",
 )
 def queue_counts(current_user: CurrentUser, kyc_service: KycServiceDep) -> KycQueueCounts:
     """Return the number of cases per status."""
@@ -136,7 +136,7 @@ def read_audit_trail(
     "/{review_id}/approve",
     response_model=KycReviewDetail,
     summary="Approve a case",
-    description="Reviewer or admin only. Records the decision and its reason in the audit trail.",
+    description="Reviewer or admin only. Records the decision and reason in the audit trail.",
 )
 def approve_review(
     review_id: int,
@@ -170,7 +170,7 @@ def reject_review(
     "/{review_id}/escalate",
     response_model=KycReviewDetail,
     summary="Escalate a case",
-    description="Reviewer or admin only. Moves the case to senior compliance for a second look.",
+    description="Reviewer or admin only. Moves the case to senior compliance for review.",
 )
 def escalate_review(
     review_id: int,

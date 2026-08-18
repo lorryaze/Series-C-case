@@ -1,7 +1,8 @@
 """Schemas shared across every tool's API."""
 
+from collections.abc import Sequence
 from math import ceil
-from typing import Generic, Sequence, TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
