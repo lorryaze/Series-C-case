@@ -6,6 +6,7 @@ import type { Column } from '../components/common/Table';
 import { Button } from '../components/common/Button';
 import { Field, FilterBar, inputClass } from '../components/common/FilterBar';
 import { CreateFlagModal } from '../components/tools/feature-flags/CreateFlagModal';
+import { DeleteFlagDialog } from '../components/tools/feature-flags/DeleteFlagDialog';
 import { FlagEnvironmentControls } from '../components/tools/feature-flags/FlagEnvironmentControls';
 import { FlagHistoryModal } from '../components/tools/feature-flags/FlagHistoryModal';
 import { useAuth } from '../context/AuthContext';
@@ -23,6 +24,7 @@ export function FeatureFlagsPage(): JSX.Element {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [historyFlag, setHistoryFlag] = useState<FeatureFlag | null>(null);
+  const [flagToDelete, setFlagToDelete] = useState<FeatureFlag | null>(null);
 
   const debouncedSearch = useDebouncedValue(searchTerm);
   const effectiveFilters = useMemo<FeatureFlagFilters>(
@@ -63,12 +65,19 @@ export function FeatureFlagsPage(): JSX.Element {
       ),
     },
     {
-      key: 'history',
+      key: 'actions',
       header: '',
       render: (row) => (
-        <Button variant="ghost" size="sm" onClick={() => setHistoryFlag(row)}>
-          History
-        </Button>
+        <div className="flex justify-end gap-1">
+          <Button variant="ghost" size="sm" onClick={() => setHistoryFlag(row)}>
+            History
+          </Button>
+          {canAdminister && (
+            <Button variant="ghost" size="sm" onClick={() => setFlagToDelete(row)}>
+              Delete
+            </Button>
+          )}
+        </div>
       ),
     },
   ];
@@ -172,6 +181,9 @@ export function FeatureFlagsPage(): JSX.Element {
           flagName={historyFlag.name}
           onClose={() => setHistoryFlag(null)}
         />
+      )}
+      {flagToDelete && (
+        <DeleteFlagDialog flag={flagToDelete} onClose={() => setFlagToDelete(null)} />
       )}
     </>
   );

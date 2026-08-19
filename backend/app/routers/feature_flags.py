@@ -9,7 +9,7 @@ from app.middleware.auth import CurrentUser, require_admin
 from app.models.enums import FlagEnvironment
 from app.models.user import User
 from app.schemas.audit import AuditLogRead
-from app.schemas.common import Page
+from app.schemas.common import MessageResponse, Page
 from app.schemas.feature_flag import (
     FeatureFlagCreate,
     FeatureFlagHistory,
@@ -148,18 +148,45 @@ def update_flag_state(
     return FeatureFlagRead.model_validate(flag)
 
 
+@router.delete(
+    "/{flag_id}",
+    response_model=MessageResponse,
+    summary="Delete a feature flag",
+    description=(
+        "Admin only. Removes the flag and its per-environment states. The deletion is "
+        "written to the shared audit trail before the row is removed."
+    ),
+)
+def delete_flag(
+    flag_id: int, flag_service: FeatureFlagServiceDep, actor: AdminDep
+) -> MessageResponse:
+    """Delete a flag."""
+    key = flag_service.delete_flag(flag_id, actor=actor)
+    return MessageResponse(message=f"Feature flag '{key}' was deleted")
+
+
 @router.get(
     "/{flag_id}/history",
     response_model=FeatureFlagHistory,
     summary="Read a flag's changelog",
-    description="Who changed what and when, newest first, from the shared audit trail.",
+    description=(
+        "Who changed what and when, newest first, from the shared audit trail. "
+        "Paginated so a long-lived flag's changelog stays bounded."
+    ),
 )
 def read_flag_history(
-    flag_id: int, current_user: CurrentUser, flag_service: FeatureFlagServiceDep
+    flag_id: int,
+    current_user: CurrentUser,
+    flag_service: FeatureFlagServiceDep,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=200)] = 25,
 ) -> FeatureFlagHistory:
-    """Return the changelog of one flag."""
-    entries = flag_service.history(flag_id)
-    return FeatureFlagHistory(
-        flag_id=flag_id,
-        entries=[AuditLogRead.model_validate(entry) for entry in entries],
+    """Return one page of the changelog of a flag."""
+    entries, total = flag_service.history(flag_id, page=page, page_size=page_size)
+    return FeatureFlagHistory.for_flag(
+        flag_id,
+        [AuditLogRead.model_validate(entry) for entry in entries],
+        total=total,
+        page=page,
+        page_size=page_size,
     )

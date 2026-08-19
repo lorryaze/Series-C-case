@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AuditTrail } from '../../common/AuditTrail';
 import { Button } from '../../common/Button';
 import { Modal } from '../../common/Modal';
@@ -12,7 +13,8 @@ export function FlagHistoryModal({
   flagName: string;
   onClose: () => void;
 }): JSX.Element {
-  const { data, isLoading } = useFlagHistory(flagId);
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useFlagHistory(flagId, page);
 
   return (
     <Modal
@@ -28,7 +30,20 @@ export function FlagHistoryModal({
       {isLoading ? (
         <p className="text-sm text-slate-500">Loading history…</p>
       ) : (
-        <AuditTrail entries={data?.entries ?? []} emptyMessage="This flag has not changed yet." />
+        <AuditTrail
+          entries={data?.items ?? []}
+          emptyMessage="This flag has not changed yet."
+          pagination={
+            data
+              ? {
+                  page: data.page,
+                  pages: data.pages,
+                  total: data.total,
+                  onPageChange: setPage,
+                }
+              : undefined
+          }
+        />
       )}
     </Modal>
   );

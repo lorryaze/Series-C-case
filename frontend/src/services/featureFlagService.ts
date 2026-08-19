@@ -4,8 +4,12 @@ import type {
   FeatureFlag,
   FeatureFlagFilters,
   FlagEnvironment,
+  MessageResponse,
   Page,
 } from '../types';
+
+/** One page of a flag's changelog, from the shared audit trail. */
+export type FlagHistoryPage = Page<AuditLogEntry> & { flag_id: number };
 
 export interface FeatureFlagCreateInput {
   name: string;
@@ -45,7 +49,13 @@ export const featureFlagService = {
     });
   },
 
-  history(flagId: number): Promise<{ flag_id: number; entries: AuditLogEntry[] }> {
-    return request(`/feature-flags/${flagId}/history`);
+  history(flagId: number, page = 1, pageSize = 25): Promise<FlagHistoryPage> {
+    return request(`/feature-flags/${flagId}/history`, {
+      params: { page, page_size: pageSize },
+    });
+  },
+
+  remove(flagId: number): Promise<MessageResponse> {
+    return request<MessageResponse>(`/feature-flags/${flagId}`, { method: 'DELETE' });
   },
 };

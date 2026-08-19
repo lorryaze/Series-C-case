@@ -165,9 +165,7 @@ def test_history_records_who_changed_what(
         json={"rollout_percentage": 50},
     )
 
-    entries = admin_client.get(f"/api/feature-flags/{feature_flag.id}/history").json()[
-        "entries"
-    ]
+    entries = admin_client.get(f"/api/feature-flags/{feature_flag.id}/history").json()["items"]
     fields = [entry["field"] for entry in entries]
     assert "production.enabled" in fields
     assert "production.rollout_percentage" in fields
@@ -182,3 +180,63 @@ def test_history_records_who_changed_what(
 
 def test_unknown_flags_return_404(admin_client: TestClient) -> None:
     assert admin_client.get("/api/feature-flags/9999").status_code == 404
+
+
+def test_history_is_paginated(admin_client: TestClient, feature_flag: FeatureFlag) -> None:
+    for percentage in (10, 20, 30):
+        admin_client.patch(
+            f"/api/feature-flags/{feature_flag.id}/environments/production",
+            json={"rollout_percentage": percentage},
+        )
+
+    first = admin_client.get(
+        f"/api/feature-flags/{feature_flag.id}/history",
+        params={"page": 1, "page_size": 2},
+    ).json()
+    second = admin_client.get(
+        f"/api/feature-flags/{feature_flag.id}/history",
+        params={"page": 2, "page_size": 2},
+    ).json()
+
+    assert first["total"] == 3
+    assert first["pages"] == 2
+    assert len(first["items"]) == 2
+    assert len(second["items"]) == 1
+    assert {entry["id"] for entry in first["items"]}.isdisjoint(
+        entry["id"] for entry in second["items"]
+    )
+
+
+def test_history_rejects_out_of_range_pagination(
+    admin_client: TestClient, feature_flag: FeatureFlag
+) -> None:
+    base = f"/api/feature-flags/{feature_flag.id}/history"
+
+    assert admin_client.get(base, params={"page": 0}).status_code == 422
+    assert admin_client.get(base, params={"page_size": 500}).status_code == 422
+
+
+def test_admin_can_delete_a_flag_and_the_deletion_is_audited(
+    admin_client: TestClient, feature_flag: FeatureFlag
+) -> None:
+    flag_id = feature_flag.id
+
+    response = admin_client.delete(f"/api/feature-flags/{flag_id}")
+
+    assert response.status_code == 200
+    assert feature_flag.key in response.json()["message"]
+    assert admin_client.get(f"/api/feature-flags/{flag_id}").status_code == 404
+
+    trail = admin_client.get(f"/api/audit/feature_flag/{flag_id}").json()
+    assert "deleted" in {entry["action"] for entry in trail["items"]}
+
+
+def test_deleting_an_unknown_flag_returns_404(admin_client: TestClient) -> None:
+    assert admin_client.delete("/api/feature-flags/9999").status_code == 404
+
+
+def test_non_admins_cannot_delete_flags(
+    reviewer_client: TestClient, viewer_client: TestClient, feature_flag: FeatureFlag
+) -> None:
+    assert reviewer_client.delete(f"/api/feature-flags/{feature_flag.id}").status_code == 403
+    assert viewer_client.delete(f"/api/feature-flags/{feature_flag.id}").status_code == 403

@@ -90,6 +90,26 @@ class FeatureFlagService:
         self.session.commit()
         return flag
 
+    def delete_flag(self, flag_id: int, *, actor: User) -> str:
+        """Delete a flag and its environment states, returning the deleted key.
+
+        The audit entry is written before the row disappears, so the shared trail
+        keeps a record of retired flags even though the flag itself is gone.
+        """
+        flag = self.get_flag(flag_id)
+        key = flag.key
+        self.audit.record(
+            entity_type=AuditEntity.FEATURE_FLAG,
+            entity_id=flag.id,
+            action=AuditAction.DELETED,
+            actor=actor,
+            field="key",
+            previous_value=key,
+        )
+        self.flags.delete(flag)
+        self.session.commit()
+        return key
+
     def toggle(
         self, flag_id: int, *, environment: FlagEnvironment, enabled: bool, actor: User
     ) -> FeatureFlag:
@@ -145,10 +165,14 @@ class FeatureFlagService:
         self.session.refresh(flag)
         return flag
 
-    def history(self, flag_id: int) -> Sequence[AuditLog]:
-        """Return the changelog for one flag."""
+    def history(
+        self, flag_id: int, *, page: int = 1, page_size: int = 25
+    ) -> tuple[Sequence[AuditLog], int]:
+        """Return one page of the changelog for a flag plus the total count."""
         flag = self.get_flag(flag_id)
-        return self.audit.trail_for(AuditEntity.FEATURE_FLAG, flag.id)
+        return self.audit.paginate_trail_for(
+            AuditEntity.FEATURE_FLAG, flag.id, page=page, page_size=page_size
+        )
 
     def state_for(self, flag: FeatureFlag, environment: FlagEnvironment) -> FeatureFlagState:
         """Return a flag's state in ``environment``, or fail if uninitialised."""
