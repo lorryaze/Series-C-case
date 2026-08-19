@@ -80,11 +80,33 @@ class AuditService:
     def trail_for(
         self, entity_type: AuditEntity, entity_id: int, *, limit: int = 200
     ) -> Sequence[AuditLog]:
-        """Return the trail for one entity, newest first."""
+        """Return a capped trail for one entity, newest first.
+
+        Used where the trail is embedded in another response and stays naturally
+        short, such as a refund's approval chain. Anything user-browsable should
+        use :meth:`paginate_trail_for` instead.
+        """
         return self.repository.list_for_entity(entity_type, entity_id, limit=limit)
 
-    def recent(
-        self, *, entity_type: AuditEntity | None = None, limit: int = 100
-    ) -> Sequence[AuditLog]:
-        """Return the most recent entries across the platform."""
-        return self.repository.list_recent(entity_type=entity_type, limit=limit)
+    def paginate_trail_for(
+        self,
+        entity_type: AuditEntity,
+        entity_id: int,
+        *,
+        page: int = 1,
+        page_size: int = 25,
+    ) -> tuple[Sequence[AuditLog], int]:
+        """Return one page of an entity's trail plus the total entry count."""
+        statement = self.repository.entity_query(entity_type, entity_id)
+        return self.repository.paginate(statement, page=page, page_size=page_size)
+
+    def paginate_recent(
+        self,
+        *,
+        entity_type: AuditEntity | None = None,
+        page: int = 1,
+        page_size: int = 25,
+    ) -> tuple[Sequence[AuditLog], int]:
+        """Return one page of platform activity plus the total entry count."""
+        statement = self.repository.recent_query(entity_type=entity_type)
+        return self.repository.paginate(statement, page=page, page_size=page_size)

@@ -223,7 +223,7 @@ def test_audit_trail_captures_previous_and_new_values(
         json={"reason": "All checks cleared."},
     )
 
-    entries = reviewer_client.get(f"/api/kyc/reviews/{kyc_review.id}/audit").json()["entries"]
+    entries = reviewer_client.get(f"/api/kyc/reviews/{kyc_review.id}/audit").json()["items"]
     actions = {entry["action"] for entry in entries}
     assert {"assigned", "status_changed"} <= actions
 
