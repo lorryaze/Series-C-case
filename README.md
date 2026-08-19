@@ -87,8 +87,11 @@ Quality gates:
 
 ```bash
 cd backend  && pytest && ruff check . && mypy app tests
-cd frontend && npm run typecheck && npm run lint && npm run build
+cd frontend && npm run typecheck && npm run lint && npm run test && npm run build
 ```
+
+Frontend tests run on Vitest + React Testing Library (jsdom) and cover the currency formatter,
+the API client's token-refresh retry, role-gated actions and audit pagination.
 
 ## Demo credentials
 
@@ -119,7 +122,20 @@ All endpoints are described with summaries, descriptions and response models at
 Every mutation in every tool writes one `audit_logs` row through the shared `AuditService`:
 entity type, entity id, action, field, previous value, new value, reason, actor and timestamp.
 The same `AuditTrail` component renders it in the KYC case drawer, the refund approval chain and
-the feature flag changelog.
+the feature flag changelog. The browsable trails (`/api/audit`, KYC case audit, flag history) are
+paginated with the shared `Page[T]` envelope; the refund approval chain stays embedded in the
+refund detail response with a hard cap, since a single refund's decision chain is a handful of rows.
+
+## Session handling and limits
+
+Login returns an access token plus a refresh token; the API client rotates them once on a `401`
+and drops the session if that fails. Repeated failed logins per IP/email are throttled with an
+in-process sliding window returning `429` — enough for the demo's single worker, but a shared
+store (e.g. Redis) is required before running multiple replicas.
+
+Amounts carry their booking currency and the UI formats each row in it. Dashboard aggregates are
+reported in `REPORTING_CURRENCY` (default `USD`) and are summed without FX conversion, which is
+correct for the single-currency seed data.
 
 ## Screenshots
 
