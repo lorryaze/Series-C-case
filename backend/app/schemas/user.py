@@ -1,6 +1,6 @@
 """User schemas."""
 
-from pydantic import EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field
 
 from app.models.enums import Role
 from app.schemas.common import ORMModel
@@ -25,7 +25,7 @@ class UserSummary(ORMModel):
     role: Role
 
 
-class UserCreate(ORMModel):
+class UserCreate(BaseModel):
     """Payload for provisioning a user (admin only)."""
 
     email: EmailStr

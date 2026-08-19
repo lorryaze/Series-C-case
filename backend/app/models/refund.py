@@ -1,6 +1,7 @@
 """Refund request model."""
 
 from datetime import datetime
+from decimal import Decimal
 
 from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text
 from sqlalchemy import Enum as SAEnum
@@ -24,7 +25,7 @@ class Refund(Base, TimestampMixin):
     customer_email: Mapped[str] = mapped_column(String(255), nullable=False)
     transaction_reference: Mapped[str] = mapped_column(String(64), nullable=False)
 
-    amount: Mapped[float] = mapped_column(Numeric(12, 2), index=True, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), index=True, nullable=False)
     currency: Mapped[str] = mapped_column(String(3), default="USD", nullable=False)
     reason: Mapped[RefundReason] = mapped_column(
         SAEnum(RefundReason, native_enum=False), index=True, nullable=False

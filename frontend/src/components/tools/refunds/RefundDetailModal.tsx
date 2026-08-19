@@ -94,7 +94,10 @@ export function RefundDetailModal({
                 Refund
               </h3>
               <dl className="mt-2">
-                <DetailRow label="Amount" value={formatCurrency(refund.amount)} />
+                <DetailRow
+                  label="Amount"
+                  value={formatCurrency(refund.amount, refund.currency)}
+                />
                 <DetailRow label="Status" value={<StatusBadge status={refund.status} />} />
                 <DetailRow label="Reason" value={humanize(refund.reason)} />
                 <DetailRow label="Detail" value={refund.reason_detail ?? '—'} />
@@ -142,7 +145,7 @@ export function RefundDetailModal({
                 {refund.customer_history.map((item) => (
                   <li key={item.id} className="flex items-center justify-between">
                     <span className="text-slate-700">
-                      {item.refund_reference} · {formatCurrency(item.amount)}
+                      {item.refund_reference} · {formatCurrency(item.amount, item.currency)}
                     </span>
                     <StatusBadge status={item.status} />
                   </li>

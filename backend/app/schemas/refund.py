@@ -31,6 +31,7 @@ class CustomerRefundHistoryItem(ORMModel):
     id: int
     refund_reference: str
     amount: Decimal
+    currency: str
     status: RefundStatus
     requested_at: datetime
 
@@ -53,6 +54,7 @@ class RefundDetail(RefundListItem):
 class RefundSummary(BaseModel):
     """Summary cards on top of the refunds dashboard."""
 
+    currency: str = Field(description="Currency the aggregated amounts are reported in")
     total_count: int
     total_amount: Decimal
     pending_count: int
@@ -71,6 +73,7 @@ class RefundTrendPoint(BaseModel):
     day: date
     count: int
     amount: Decimal
+    currency: str
 
 
 class RefundCreate(BaseModel):

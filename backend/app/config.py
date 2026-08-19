@@ -37,7 +37,26 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
     ]
 
+    reporting_currency: str = Field(
+        default="USD",
+        min_length=3,
+        max_length=3,
+        description="Currency the dashboard aggregates are reported in.",
+    )
+
     demo_user_password: str = "demo123"
+
+    login_rate_limit_attempts: int = Field(
+        default=10,
+        ge=1,
+        description="Failed login attempts allowed per client within the window.",
+    )
+    login_rate_limit_window_seconds: int = Field(
+        default=300,
+        ge=1,
+        description="Rolling window used to count failed login attempts.",
+    )
+    refresh_token_expire_minutes: int = 7 * 24 * 60
 
 
 @lru_cache

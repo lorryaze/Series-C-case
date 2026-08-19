@@ -46,6 +46,13 @@ class AuthenticationError(AppError):
     code = "authentication_error"
 
 
+class RateLimitedError(AppError):
+    """The caller has made too many requests in the allotted window."""
+
+    status_code = 429
+    code = "rate_limited"
+
+
 class PermissionDeniedError(AppError):
     """The caller is authenticated but lacks the required role."""
 
