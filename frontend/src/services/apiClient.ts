@@ -1,9 +1,11 @@
 /**
  * Thin fetch wrapper shared by every tool: injects the bearer token, unwraps the
- * platform error envelope and clears the session on a 401.
+ * platform error envelope and, on a 401, tries the refresh token once before
+ * dropping the session.
  */
 
 const TOKEN_STORAGE_KEY = 'internal-tools.token';
+const REFRESH_TOKEN_STORAGE_KEY = 'internal-tools.refresh-token';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
@@ -41,10 +43,30 @@ export const tokenStorage = {
   write(token: string): void {
     localStorage.setItem(TOKEN_STORAGE_KEY, token);
   },
+  readRefresh(): string | null {
+    return localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+  },
+  writeRefresh(token: string): void {
+    localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, token);
+  },
   clear(): void {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
   },
 };
+
+type SessionExpiredListener = () => void;
+
+const sessionExpiredListeners = new Set<SessionExpiredListener>();
+
+/**
+ * Notified when the session is dropped mid-flight (both tokens are gone), so the
+ * shell can clear the cached user and route to the login page without a reload.
+ */
+export function onSessionExpired(listener: SessionExpiredListener): () => void {
+  sessionExpiredListeners.add(listener);
+  return () => sessionExpiredListeners.delete(listener);
+}
 
 export type QueryParams = Record<string, string | number | boolean | undefined | null>;
 
@@ -82,11 +104,47 @@ async function parseError(response: Response): Promise<ApiError> {
   return new ApiError(response.status, code, message, details);
 }
 
-export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+/** Paths where a 401 is the answer, not a stale-token symptom. */
+const NON_REFRESHABLE_PATHS = ['/auth/login', '/auth/refresh'];
+
+interface TokenPair {
+  access_token: string;
+  refresh_token: string;
+}
+
+/** In-flight refresh, so parallel 401s wait on a single rotation. */
+let refreshInFlight: Promise<boolean> | null = null;
+
+async function rotateTokens(): Promise<boolean> {
+  const refreshToken = tokenStorage.readRefresh();
+  if (!refreshToken) return false;
+
+  const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+  if (!response.ok) return false;
+
+  const pair = (await response.json()) as TokenPair;
+  tokenStorage.write(pair.access_token);
+  tokenStorage.writeRefresh(pair.refresh_token);
+  return true;
+}
+
+async function refreshSession(): Promise<boolean> {
+  refreshInFlight ??= rotateTokens()
+    .catch(() => false)
+    .finally(() => {
+      refreshInFlight = null;
+    });
+  return refreshInFlight;
+}
+
+function send(path: string, options: RequestOptions): Promise<Response> {
   const { method = 'GET', body, params } = options;
   const token = tokenStorage.read();
-
-  const response = await fetch(`${API_BASE_URL}${path}${buildQuery(params)}`, {
+  return fetch(`${API_BASE_URL}${path}${buildQuery(params)}`, {
     method,
     headers: {
       ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
@@ -94,9 +152,25 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
+}
+
+export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  let response = await send(path, options);
+
+  if (response.status === 401 && !NON_REFRESHABLE_PATHS.includes(path)) {
+    // One retry only: a second 401 means the refresh token is gone too.
+    if (await refreshSession()) {
+      response = await send(path, options);
+    }
+  }
 
   if (response.status === 401) {
     tokenStorage.clear();
+    if (!NON_REFRESHABLE_PATHS.includes(path)) {
+      // The credentials are unusable: tell the shell so it routes to /login
+      // instead of rendering empty data behind a stale user.
+      sessionExpiredListeners.forEach((listener) => listener());
+    }
     throw await parseError(response);
   }
   if (!response.ok) {

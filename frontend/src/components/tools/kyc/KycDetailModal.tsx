@@ -36,7 +36,8 @@ export function KycDetailModal({
 }): JSX.Element {
   const { canReview } = useAuth();
   const { data: review, isLoading } = useKycReview(reviewId);
-  const { data: audit } = useKycAuditTrail(reviewId);
+  const [auditPage, setAuditPage] = useState(1);
+  const { data: audit } = useKycAuditTrail(reviewId, auditPage);
   const { data: reviewers = [] } = useReviewers(canReview);
   const decision = useKycDecision(reviewId);
   const assignment = useKycAssignment(reviewId);
@@ -235,7 +236,19 @@ export function KycDetailModal({
                 Audit log
               </h3>
               <div className="mt-2 max-h-64 overflow-y-auto pr-1">
-                <AuditTrail entries={audit?.entries ?? []} />
+                <AuditTrail
+                  entries={audit?.items ?? []}
+                  pagination={
+                    audit
+                      ? {
+                          page: audit.page,
+                          pages: audit.pages,
+                          total: audit.total,
+                          onPageChange: setAuditPage,
+                        }
+                      : undefined
+                  }
+                />
               </div>
             </section>
           </div>

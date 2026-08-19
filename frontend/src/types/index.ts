@@ -47,9 +47,14 @@ export interface UserSummary {
 
 export interface LoginResponse {
   access_token: string;
+  refresh_token: string;
   token_type: string;
   expires_in: number;
   user: User;
+}
+
+export interface MessageResponse {
+  message: string;
 }
 
 export interface Page<T> {
@@ -153,6 +158,7 @@ export interface CustomerRefundHistoryItem {
   id: number;
   refund_reference: string;
   amount: string;
+  currency: string;
   status: RefundStatus;
   requested_at: string;
 }
@@ -171,6 +177,7 @@ export interface RefundDetail extends RefundListItem {
 }
 
 export interface RefundSummary {
+  currency: string;
   total_count: number;
   total_amount: string;
   pending_count: number;
@@ -187,6 +194,7 @@ export interface RefundTrendPoint {
   day: string;
   count: number;
   amount: string;
+  currency: string;
 }
 
 export interface RefundFilters {

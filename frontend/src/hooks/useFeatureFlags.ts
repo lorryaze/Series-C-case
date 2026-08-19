@@ -12,10 +12,10 @@ export function useFeatureFlags(filters: FeatureFlagFilters) {
   });
 }
 
-export function useFlagHistory(flagId: number | null) {
+export function useFlagHistory(flagId: number | null, page = 1) {
   return useQuery({
-    queryKey: [...FLAG_KEY, 'history', flagId],
-    queryFn: () => featureFlagService.history(flagId as number),
+    queryKey: [...FLAG_KEY, 'history', flagId, page],
+    queryFn: () => featureFlagService.history(flagId as number, page),
     enabled: flagId !== null,
   });
 }
@@ -29,6 +29,14 @@ export function useCreateFlag() {
   const invalidate = useFlagInvalidation();
   return useMutation({
     mutationFn: (input: FeatureFlagCreateInput) => featureFlagService.create(input),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteFlag() {
+  const invalidate = useFlagInvalidation();
+  return useMutation({
+    mutationFn: (flagId: number) => featureFlagService.remove(flagId),
     onSuccess: invalidate,
   });
 }

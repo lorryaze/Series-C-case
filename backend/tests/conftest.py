@@ -20,12 +20,21 @@ from app.main import create_app
 from app.models import Base, FeatureFlag, KycReview, Refund, User
 from app.models.base import utcnow
 from app.models.enums import DocumentType, RefundReason, Role
+from app.routers.auth import login_rate_limiter
 from app.schemas.feature_flag import FeatureFlagCreate
 from app.schemas.kyc import KycReviewCreate
 from app.schemas.refund import RefundCreate
 from app.utils.security import hash_password
 
 TEST_PASSWORD = "demo123"
+
+
+@pytest.fixture(autouse=True)
+def reset_login_rate_limiter() -> Iterator[None]:
+    """Keep the process-wide login limiter from leaking between tests."""
+    login_rate_limiter.clear()
+    yield
+    login_rate_limiter.clear()
 
 
 @pytest.fixture(name="settings")

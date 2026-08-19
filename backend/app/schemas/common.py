@@ -9,6 +9,11 @@ from pydantic import BaseModel, ConfigDict, Field
 ItemT = TypeVar("ItemT")
 
 
+def page_count(total: int, page_size: int) -> int:
+    """Return how many pages ``total`` records span."""
+    return ceil(total / page_size) if page_size else 0
+
+
 class ORMModel(BaseModel):
     """Base for response schemas read directly off ORM instances."""
 
@@ -34,7 +39,7 @@ class Page(BaseModel, Generic[ItemT]):
             total=total,
             page=page,
             page_size=page_size,
-            pages=ceil(total / page_size) if page_size else 0,
+            pages=page_count(total, page_size),
         )
 
 

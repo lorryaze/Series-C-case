@@ -55,7 +55,9 @@ export function RefundsPage(): JSX.Element {
     {
       key: 'amount',
       header: 'Amount',
-      render: (row) => <span className="font-medium">{formatCurrency(row.amount)}</span>,
+      render: (row) => (
+        <span className="font-medium">{formatCurrency(row.amount, row.currency)}</span>
+      ),
     },
     { key: 'reason', header: 'Reason', render: (row) => humanize(row.reason) },
     { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
@@ -71,28 +73,28 @@ export function RefundsPage(): JSX.Element {
           <StatCard
             label="Total refunds"
             value={summary?.total_count ?? 0}
-            hint={summary ? formatCurrency(summary.total_amount) : undefined}
+            hint={summary ? formatCurrency(summary.total_amount, summary.currency) : undefined}
             active={filters.status === undefined}
             onClick={() => patchFilters({ status: undefined })}
           />
           <StatCard
             label="Pending"
             value={summary?.pending_count ?? 0}
-            hint={summary ? formatCurrency(summary.pending_amount) : undefined}
+            hint={summary ? formatCurrency(summary.pending_amount, summary.currency) : undefined}
             active={filters.status === 'pending'}
             onClick={() => patchFilters({ status: 'pending' })}
           />
           <StatCard
             label="Approved"
             value={summary?.approved_count ?? 0}
-            hint={summary ? formatCurrency(summary.approved_amount) : undefined}
+            hint={summary ? formatCurrency(summary.approved_amount, summary.currency) : undefined}
             active={filters.status === 'approved'}
             onClick={() => patchFilters({ status: 'approved' })}
           />
           <StatCard
             label="Rejected"
             value={summary?.rejected_count ?? 0}
-            hint={summary ? formatCurrency(summary.rejected_amount) : undefined}
+            hint={summary ? formatCurrency(summary.rejected_amount, summary.currency) : undefined}
             active={filters.status === 'rejected'}
             onClick={() => patchFilters({ status: 'rejected' })}
           />

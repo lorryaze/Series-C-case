@@ -199,10 +199,14 @@ class KycService:
         self.session.commit()
         return note
 
-    def audit_trail(self, review_id: int) -> Sequence[AuditLog]:
-        """Return the audit entries for one case."""
+    def audit_trail(
+        self, review_id: int, *, page: int = 1, page_size: int = 25
+    ) -> tuple[Sequence[AuditLog], int]:
+        """Return one page of audit entries for a case plus the total count."""
         review = self.get_review(review_id)
-        return self.audit.trail_for(AuditEntity.KYC_REVIEW, review.id)
+        return self.audit.paginate_trail_for(
+            AuditEntity.KYC_REVIEW, review.id, page=page, page_size=page_size
+        )
 
     def _decide(
         self, review_id: int, new_status: KycStatus, *, reason: str, actor: User

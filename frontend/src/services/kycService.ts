@@ -9,6 +9,9 @@ import type {
   Page,
 } from '../types';
 
+/** One page of a case's audit trail, from the shared audit trail. */
+export type KycAuditPage = Page<AuditLogEntry> & { review_id: number };
+
 export const kycService = {
   list(filters: KycFilters): Promise<Page<KycReviewListItem>> {
     return request<Page<KycReviewListItem>>('/kyc/reviews', { params: { ...filters } });
@@ -22,8 +25,10 @@ export const kycService = {
     return request<KycReviewDetail>(`/kyc/reviews/${reviewId}`);
   },
 
-  auditTrail(reviewId: number): Promise<{ review_id: number; entries: AuditLogEntry[] }> {
-    return request(`/kyc/reviews/${reviewId}/audit`);
+  auditTrail(reviewId: number, page = 1, pageSize = 25): Promise<KycAuditPage> {
+    return request(`/kyc/reviews/${reviewId}/audit`, {
+      params: { page, page_size: pageSize },
+    });
   },
 
   decide(

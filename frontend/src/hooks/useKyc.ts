@@ -23,10 +23,10 @@ export function useKycReview(reviewId: number | null) {
   });
 }
 
-export function useKycAuditTrail(reviewId: number | null) {
+export function useKycAuditTrail(reviewId: number | null, page = 1) {
   return useQuery({
-    queryKey: [...KYC_KEY, 'audit', reviewId],
-    queryFn: () => kycService.auditTrail(reviewId as number),
+    queryKey: [...KYC_KEY, 'audit', reviewId, page],
+    queryFn: () => kycService.auditTrail(reviewId as number, page),
     enabled: reviewId !== null,
   });
 }

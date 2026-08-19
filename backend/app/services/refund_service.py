@@ -6,6 +6,7 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.factories.refund_factory import RefundFactory
 from app.models.audit import AuditLog
 from app.models.base import utcnow
@@ -68,6 +69,7 @@ class RefundService:
             return aggregate.amount if aggregate else Decimal("0")
 
         return RefundSummary(
+            currency=get_settings().reporting_currency,
             total_count=sum(agg.count for agg in aggregates.values()),
             total_amount=sum((agg.amount for agg in aggregates.values()), start=Decimal("0")),
             pending_count=count_of(RefundStatus.PENDING),
@@ -82,6 +84,7 @@ class RefundService:
 
     def trend(self, *, days: int = 30) -> list[RefundTrendPoint]:
         """Return a dense daily series of refund volume for the last ``days`` days."""
+        currency = get_settings().reporting_currency
         since = utcnow() - timedelta(days=days - 1)
         totals = {
             day: (count, amount)
@@ -91,7 +94,9 @@ class RefundService:
         for offset in range(days):
             day = (since + timedelta(days=offset)).date()
             count, amount = totals.get(day, (0, Decimal("0")))
-            series.append(RefundTrendPoint(day=day, count=count, amount=amount))
+            series.append(
+                RefundTrendPoint(day=day, count=count, amount=amount, currency=currency)
+            )
         return series
 
     def get_refund(self, refund_id: int) -> Refund:

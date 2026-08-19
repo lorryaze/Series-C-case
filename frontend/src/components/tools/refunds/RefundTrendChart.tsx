@@ -8,10 +8,15 @@ import {
   YAxis,
 } from 'recharts';
 import type { RefundTrendPoint } from '../../../types';
-import { formatCurrency } from '../../../utils/format';
+import {
+  DEFAULT_CURRENCY,
+  formatCurrency,
+  formatCurrencyCompact,
+} from '../../../utils/format';
 
 /** Refund volume over the trailing window, rendered from the dense daily series. */
 export function RefundTrendChart({ points }: { points: RefundTrendPoint[] }): JSX.Element {
+  const currency = points[0]?.currency ?? DEFAULT_CURRENCY;
   const data = points.map((point) => ({
     day: point.day.slice(5),
     amount: Number(point.amount),
@@ -32,12 +37,12 @@ export function RefundTrendChart({ points }: { points: RefundTrendPoint[] }): JS
           <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#64748b' }} interval={4} />
           <YAxis
             tick={{ fontSize: 11, fill: '#64748b' }}
-            tickFormatter={(value: number) => `$${Math.round(value / 100) / 10}k`}
+            tickFormatter={(value: number) => formatCurrencyCompact(value, currency)}
             width={48}
           />
           <Tooltip
             formatter={(value: number, name) =>
-              name === 'amount' ? formatCurrency(value) : `${value} refunds`
+              name === 'amount' ? formatCurrency(value, currency) : `${value} refunds`
             }
             labelFormatter={(label: string) => `Day ${label}`}
           />

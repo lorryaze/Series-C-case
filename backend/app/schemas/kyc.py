@@ -1,12 +1,13 @@
 """KYC review schemas."""
 
+from collections.abc import Sequence
 from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field
 
 from app.models.enums import DocumentType, KycStatus, RiskLevel
 from app.schemas.audit import AuditLogRead
-from app.schemas.common import ORMModel
+from app.schemas.common import ORMModel, Page, page_count
 from app.schemas.user import UserSummary
 
 
@@ -120,8 +121,27 @@ class NoteCreate(BaseModel):
     body: str = Field(min_length=1, max_length=2000)
 
 
-class KycAuditTrail(BaseModel):
-    """Audit entries for one case, newest first."""
+class KycAuditTrail(Page[AuditLogRead]):
+    """One page of audit entries for a case, newest first."""
 
     review_id: int
-    entries: list[AuditLogRead]
+
+    @classmethod
+    def for_case(
+        cls,
+        review_id: int,
+        entries: Sequence[AuditLogRead],
+        *,
+        total: int,
+        page: int,
+        page_size: int,
+    ) -> "KycAuditTrail":
+        """Assemble a paginated trail response for one case."""
+        return cls(
+            review_id=review_id,
+            items=list(entries),
+            total=total,
+            page=page,
+            page_size=page_size,
+            pages=page_count(total, page_size),
+        )

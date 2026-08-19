@@ -1,12 +1,13 @@
 """Feature flag schemas."""
 
+from collections.abc import Sequence
 from datetime import datetime
 
 from pydantic import BaseModel, Field
 
 from app.models.enums import FlagEnvironment
 from app.schemas.audit import AuditLogRead
-from app.schemas.common import ORMModel
+from app.schemas.common import ORMModel, Page, page_count
 from app.schemas.user import UserSummary
 
 
@@ -66,8 +67,27 @@ class FeatureFlagToggle(BaseModel):
     enabled: bool
 
 
-class FeatureFlagHistory(BaseModel):
-    """Changelog for one flag, newest first."""
+class FeatureFlagHistory(Page[AuditLogRead]):
+    """One page of the changelog for a flag, newest first."""
 
     flag_id: int
-    entries: list[AuditLogRead]
+
+    @classmethod
+    def for_flag(
+        cls,
+        flag_id: int,
+        entries: Sequence[AuditLogRead],
+        *,
+        total: int,
+        page: int,
+        page_size: int,
+    ) -> "FeatureFlagHistory":
+        """Assemble a paginated changelog response for one flag."""
+        return cls(
+            flag_id=flag_id,
+            items=list(entries),
+            total=total,
+            page=page,
+            page_size=page_size,
+            pages=page_count(total, page_size),
+        )

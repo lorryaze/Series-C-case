@@ -118,17 +118,25 @@ def read_review(
     summary="Read a case's audit trail",
     description=(
         "Every status change, assignment and note on the case, newest first, with actor, "
-        "timestamp and previous/new values. Readable by any authenticated role."
+        "timestamp and previous/new values. Paginated, and readable by any authenticated "
+        "role."
     ),
 )
 def read_audit_trail(
-    review_id: int, current_user: CurrentUser, kyc_service: KycServiceDep
+    review_id: int,
+    current_user: CurrentUser,
+    kyc_service: KycServiceDep,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=200)] = 25,
 ) -> KycAuditTrail:
-    """Return the audit trail of a case."""
-    entries = kyc_service.audit_trail(review_id)
-    return KycAuditTrail(
-        review_id=review_id,
-        entries=[AuditLogRead.model_validate(entry) for entry in entries],
+    """Return one page of the audit trail of a case."""
+    entries, total = kyc_service.audit_trail(review_id, page=page, page_size=page_size)
+    return KycAuditTrail.for_case(
+        review_id,
+        [AuditLogRead.model_validate(entry) for entry in entries],
+        total=total,
+        page=page,
+        page_size=page_size,
     )
 
 

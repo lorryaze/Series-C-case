@@ -8,6 +8,7 @@ export const authService = {
       body: { email, password },
     });
     tokenStorage.write(response.access_token);
+    tokenStorage.writeRefresh(response.refresh_token);
     return response;
   },
 
