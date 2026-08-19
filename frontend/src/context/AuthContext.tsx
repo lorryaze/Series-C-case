@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { authService } from '../services/authService';
-import { tokenStorage } from '../services/apiClient';
+import { onSessionExpired, tokenStorage } from '../services/apiClient';
 import type { Role, User } from '../types';
 
 interface AuthContextValue {
@@ -34,6 +34,10 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       .catch(() => tokenStorage.clear())
       .finally(() => setIsLoading(false));
   }, []);
+
+  // A 401 that survives the refresh attempt means the session is over: drop the
+  // cached user so RequireAuth routes to /login without waiting for a reload.
+  useEffect(() => onSessionExpired(() => setUser(null)), []);
 
   const login = useCallback(async (email: string, password: string) => {
     const response = await authService.login(email, password);

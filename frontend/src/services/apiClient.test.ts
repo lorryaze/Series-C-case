@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, buildQuery, request, tokenStorage } from './apiClient';
+import { ApiError, buildQuery, onSessionExpired, request, tokenStorage } from './apiClient';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -81,6 +81,30 @@ describe('request', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(tokenStorage.read()).toBeNull();
     expect(tokenStorage.readRefresh()).toBeNull();
+  });
+
+  it('announces the dead session so the shell can route to login', async () => {
+    const listener = vi.fn();
+    const unsubscribe = onSessionExpired(listener);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(unauthorized()));
+
+    await expect(request('/refunds')).rejects.toBeInstanceOf(ApiError);
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+    await expect(request('/refunds')).rejects.toBeInstanceOf(ApiError);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not announce an expired session for a rejected login', async () => {
+    const listener = vi.fn();
+    const unsubscribe = onSessionExpired(listener);
+    tokenStorage.clear();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(unauthorized()));
+
+    await expect(request('/auth/login', { method: 'POST' })).rejects.toBeInstanceOf(ApiError);
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
   });
 
   it('does not try to refresh a failed login', async () => {

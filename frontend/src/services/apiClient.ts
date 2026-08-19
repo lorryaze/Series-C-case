@@ -55,6 +55,19 @@ export const tokenStorage = {
   },
 };
 
+type SessionExpiredListener = () => void;
+
+const sessionExpiredListeners = new Set<SessionExpiredListener>();
+
+/**
+ * Notified when the session is dropped mid-flight (both tokens are gone), so the
+ * shell can clear the cached user and route to the login page without a reload.
+ */
+export function onSessionExpired(listener: SessionExpiredListener): () => void {
+  sessionExpiredListeners.add(listener);
+  return () => sessionExpiredListeners.delete(listener);
+}
+
 export type QueryParams = Record<string, string | number | boolean | undefined | null>;
 
 export function buildQuery(params: QueryParams = {}): string {
@@ -153,6 +166,11 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   if (response.status === 401) {
     tokenStorage.clear();
+    if (!NON_REFRESHABLE_PATHS.includes(path)) {
+      // The credentials are unusable: tell the shell so it routes to /login
+      // instead of rendering empty data behind a stale user.
+      sessionExpiredListeners.forEach((listener) => listener());
+    }
     throw await parseError(response);
   }
   if (!response.ok) {
